@@ -6,6 +6,6 @@ compatibility_date = "2026-08-01"
 pages_build_output_dir = "."
 
 [[d1_databases]]
-binding = "DB"
+binding = "kabucon_db"
 database_name = "kabucon-db"
-database_id = "PUT-YOUR-D1-DATABASE-ID-HERE"
+database_id = "a4b7690d-cbfb-406f-8246-5ed8311db9ae"
