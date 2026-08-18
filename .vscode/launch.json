@@ -2,12 +2,24 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "カブコン: ローカル起動とブラウザーデバッグ",
-      "type": "msedge",
+      "name": "カブコン: ローカルD1で起動",
+      "type": "chrome",
       "request": "launch",
       "url": "http://127.0.0.1:8788",
       "webRoot": "${workspaceFolder}",
-      "preLaunchTask": "Wrangler: Pages dev"
+      "preLaunchTask": "Wrangler: Pages dev (ローカルD1)",
+      "timeout": 60000,
+      "runtimeArgs": ["--remote-debugging-port=9222"]
+    },
+    {
+      "name": "カブコン: 本番D1で起動 (remote)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:8788",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Wrangler: Pages dev (本番D1 remote)",
+      "timeout": 60000,
+      "runtimeArgs": ["--remote-debugging-port=9222"]
     }
   ]
 }

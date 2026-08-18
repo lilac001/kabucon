@@ -2,8 +2,17 @@
  * J-Quants API proxy.
  *
  * Browsers cannot reliably call the J-Quants API directly because its CORS
- * policy can reject cross-origin requests. The token may be supplied per
- * request or stored in the JQUANTS_TOKEN Pages secret / local .dev.vars file.
+ * policy can reject cross-origin requests.
+ *
+ * 認証方式:
+ *   J-Quants API v2 (2025-12-22以降登録) → API キー認証
+ *   旧 v1 ID トークン方式も後方互換として受け付ける
+ *
+ * 環境変数 (.dev.vars / Pages Secret どちらにも設定可):
+ *   JQUANTS_API_KEY  ... v2 API キー (推奨)
+ *   JQUANTS_TOKEN    ... v1 ID トークン (後方互換)
+ *
+ * 環境変数が設定済みであれば画面入力は不要。
  */
 'use strict'
 
@@ -16,23 +25,38 @@ const json = (body, status = 200) =>
     },
   })
 
+/**
+ * 使用する Authorization ヘッダー値を決定する。
+ * 優先順位: 環境変数 JQUANTS_API_KEY > リクエストヘッダー > 環境変数 JQUANTS_TOKEN
+ */
+function resolveAuth(requestAuth, env) {
+  const apiKey = (env.JQUANTS_API_KEY || '').trim()
+  if (apiKey) return `Bearer ${apiKey}`
+  const fromRequest = requestAuth.replace(/^Bearer\s+/i, '').trim()
+  if (fromRequest) return `Bearer ${fromRequest}`
+  const idToken = (env.JQUANTS_TOKEN || '').trim()
+  if (idToken) return `Bearer ${idToken}`
+  return null
+}
+
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url)
   const code = (url.searchParams.get('code') || '').trim()
   const date = (url.searchParams.get('date') || '').replace(/-/g, '')
-  const authorization = request.headers.get('Authorization') || ''
-  const requestToken = authorization.replace(/^Bearer\s+/i, '').trim()
-  const token = requestToken || env.JQUANTS_TOKEN || ''
+  const requestAuth = request.headers.get('Authorization') || ''
 
   if (!/^\d{5}$/.test(code))
     return json({ error: '銘柄コードは5桁で指定してください。' }, 400)
   if (!/^\d{8}$/.test(date))
     return json({ error: '日付はYYYY-MM-DDで指定してください。' }, 400)
-  if (!token)
+
+  const authorization = resolveAuth(requestAuth, env)
+  if (!authorization)
     return json(
       {
         error:
-          'J-Quants IDトークンがありません。.dev.vars または Pages Secret に JQUANTS_TOKEN を設定してください。',
+          'J-Quants の認証情報がありません。' +
+          '.dev.vars または Pages Secret に JQUANTS_API_KEY (v2) を設定してください。',
       },
       400,
     )
@@ -44,7 +68,7 @@ export async function onRequestGet({ request, env }) {
     apiUrl.searchParams.set('to', date)
 
     const response = await fetch(apiUrl, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Authorization: authorization, Accept: 'application/json' },
     })
     const body = await response.json().catch(() => ({}))
     if (!response.ok) {
@@ -59,7 +83,7 @@ export async function onRequestGet({ request, env }) {
       )
     }
 
-    // API v2 returns `data`; accept the former key too for forward compatibility.
+    // v2 は `data` キー、旧 v1 互換として `daily_quotes` も受け付ける
     const quote = (body.data || body.daily_quotes || [])[0]
     if (!quote)
       return json(

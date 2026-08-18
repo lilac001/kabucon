@@ -1,3 +1,9 @@
-# Copy this file to .dev.vars and replace the value with your J-Quants ID token.
-# .dev.vars is ignored by Git and is loaded automatically by `wrangler pages dev`.
-JQUANTS_TOKEN=replace-with-your-jquants-id-token
+# Copy this file to .dev.vars and fill in your credentials.
+# .dev.vars is git-ignored and is loaded automatically by `wrangler pages dev`.
+
+# J-Quants API v2 キー (推奨: 2025-12-22以降登録のユーザーはこちら)
+# Cloudflare ダッシュボード → J-Quants ダッシュボード → API Keys で発行
+JQUANTS_API_KEY=replace-with-your-jquants-api-key
+
+# J-Quants v1 IDトークン (旧方式 / 後方互換用、通常は不要)
+# JQUANTS_TOKEN=replace-with-your-jquants-id-token

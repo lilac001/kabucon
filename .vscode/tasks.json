@@ -2,38 +2,63 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Wrangler: Pages dev",
+      "label": "Wrangler: Pages dev (ローカルD1)",
       "type": "shell",
-      "command": "npx",
-      "args": [
-        "wrangler",
-        "pages",
-        "dev",
-        ".",
-        "--port",
-        "8788",
-        "--inspector-port",
-        "9229"
-      ],
+      "command": "npx wrangler pages dev . --port 8788 --inspector-port 9229",
       "isBackground": true,
       "problemMatcher": {
         "owner": "wrangler",
-        "pattern": [
-          {
-            "regexp": ".*"
-          }
-        ],
+        "pattern": {
+          "regexp": ".",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
         "background": {
           "activeOnStart": true,
           "beginsPattern": "Starting local server",
-          "endsPattern": "Ready on http://"
+          "endsPattern": "\\[wrangler:info\\] Ready on http://"
         }
       },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "group": "wrangler"
+        "focus": false,
+        "clear": true
       }
+    },
+    {
+      "label": "Wrangler: Pages dev (本番D1 remote)",
+      "type": "shell",
+      "command": "npx wrangler pages dev . --port 8788 --inspector-port 9229 --remote",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "wrangler",
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting local server",
+          "endsPattern": "\\[wrangler:info\\] Ready on http://"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "D1: スキーマ適用 (ローカル)",
+      "type": "shell",
+      "command": "npx wrangler d1 execute kabucon-db --local --file=schema.sql",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "D1: スキーマ適用 (本番 remote)",
+      "type": "shell",
+      "command": "npx wrangler d1 execute kabucon-db --remote --file=schema.sql",
+      "presentation": { "reveal": "always", "panel": "shared" }
     }
   ]
 }
