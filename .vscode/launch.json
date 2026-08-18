@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "カブコン: ローカル起動とブラウザーデバッグ",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:8788",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Wrangler: Pages dev"
+    }
+  ]
+}
