@@ -1,11 +1,8 @@
-# カブコン — Cloudflare Pages 設定 (ローカル開発用)
-# 本番のD1バインディングは Pagesダッシュボード → Settings → Functions → D1 database bindings
-# で 変数名 DB に kabucon-db を紐付けること。
 name = "kabucon"
 compatibility_date = "2026-08-01"
 pages_build_output_dir = "."
 
 [[d1_databases]]
-binding = "kabucon_db"
+binding = "db"
 database_name = "kabucon-db"
 database_id = "a4b7690d-cbfb-406f-8246-5ed8311db9ae"
