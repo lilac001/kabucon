@@ -114,21 +114,22 @@
               </select>
             </div>
             <div class="form-row">
-              <label>銘柄コード / 銘柄名</label>
-              <div class="row-2">
-                <input
-                  id="rec-symbol"
-                  type="text"
-                  placeholder="7203"
-                  value="7203"
-                />
-                <input
-                  id="rec-symbol-name"
-                  type="text"
-                  placeholder="トヨタ自動車"
-                  value="トヨタ自動車"
-                />
-              </div>
+              <label for="rec-symbol">銘柄コード</label>
+              <input
+                id="rec-symbol"
+                type="text"
+                placeholder="7203"
+                value="7203"
+              />
+            </div>
+            <div class="form-row">
+              <label for="rec-symbol-name">銘柄名</label>
+              <input
+                id="rec-symbol-name"
+                type="text"
+                placeholder="トヨタ自動車"
+                value="トヨタ自動車"
+              />
             </div>
             <div class="form-row" id="rec-sim-opts">
               <label>シミュレーター基準価格</label>
@@ -159,15 +160,11 @@
               </p>
             </div>
             <div class="form-row hidden" id="rec-jq-opts">
-              <label>対象日 / IDトークン</label>
+              <label for="rec-jq-date">対象日</label>
               <input id="rec-jq-date" type="date" />
-              <input
-                id="rec-jq-token"
-                type="password"
-                placeholder="任意: IDトークン (環境変数設定済みなら空欄)"
-              />
               <p class="hint">
-                Cloudflare Pages Function経由でJ-Quants API v2へ接続します。JQUANTS_TOKEN設定時は空欄で利用できます。
+                Cloudflare Pages Function経由でJ-Quants API
+                v2へ接続します。APIトークンはサーバー側の環境変数を使用します。
               </p>
               <label style="margin-top:8px"
                 >CSV/JSON貼り付け(Date,Open,High,Low,Close,Volume)</label
@@ -204,8 +201,18 @@
                 <div><label>チャンク</label><span id="mon-chunks">0</span></div>
               </div>
               <canvas id="mon-spark" width="560" height="120"></canvas>
-              <div id="mon-tape" class="mon-tape"></div>
+              <div class="mon-latest-title">最新データ（20件）</div>
+              <div id="mon-latest" class="mon-latest"></div>
             </div>
+          </div>
+        </div>
+        <div class="card wide monitor-summary">
+          <h2><i class="fa-solid fa-circle-info"></i> 現在のデータ概要</h2>
+          <div class="monitor-summary-grid">
+            <div><label>銘柄名</label><span id="mon-summary-name">--</span></div>
+            <div><label>データ総数</label><span id="mon-summary-count">0</span></div>
+            <div><label>平均価格</label><span id="mon-summary-avg">--</span></div>
+            <div><label>期間</label><span id="mon-summary-period">--</span></div>
           </div>
         </div>
       </main>

@@ -246,7 +246,6 @@ class JQuantsSource {
     this.onError = null
     this._stopped = false
   }
-
   async start() {
     let ohlcv = null
     if (this.pasted.trim()) {
@@ -265,18 +264,17 @@ class JQuantsSource {
         )
       }
       const j = await r.json().catch(() => ({}))
+
       if (!r.ok)
         throw new Error(j.error || `J-Quants API取得失敗 (HTTP ${r.status})`)
-      const q = j.quote
+
+      // ここでquoteオブジェクトを取得
+      const q = j.quote || null
       if (!q) throw new Error('指定日のデータがありません')
-      ohlcv = {
-        o: q.Open ?? q.open,
-        h: q.High ?? q.high,
-        l: q.Low ?? q.low,
-        c: q.Close ?? q.close,
-        v: q.Volume ?? q.volume,
-      }
+
+      ohlcv = this._quoteToOhlcv(q)
     }
+
     if (!ohlcv || ohlcv.o == null) throw new Error('OHLCVデータが不正です')
     this._generate(ohlcv)
   }
@@ -284,18 +282,24 @@ class JQuantsSource {
     this._stopped = true
   }
 
+  _quoteToOhlcv(q) {
+    return {
+      o: Number(q.O ?? q.Open ?? q.open),
+      h: Number(q.H ?? q.High ?? q.high),
+      l: Number(q.L ?? q.Low ?? q.low),
+      c: Number(q.C ?? q.Close ?? q.close),
+      v: Number(q.Vo ?? q.Volume ?? q.volume ?? 1000000),
+    }
+  }
+
   _parsePaste(text) {
-    // CSV: date,open,high,low,close,volume または JSON
+    // CSV: date,open,high,low,close,volume または APIレスポンスJSON
     try {
       const j = JSON.parse(text)
-      const q = Array.isArray(j) ? j[0] : j.daily_quotes ? j.daily_quotes[0] : j
-      return {
-        o: +q.Open || +q.open,
-        h: +q.High || +q.high,
-        l: +q.Low || +q.low,
-        c: +q.Close || +q.close,
-        v: +q.Volume || +q.volume || 1000000,
-      }
+      const q = Array.isArray(j)
+        ? j[0]
+        : j.quote || (j.daily_quotes ? j.daily_quotes[0] : j)
+      return this._quoteToOhlcv(q)
     } catch (e) {
       /* not JSON */
     }
