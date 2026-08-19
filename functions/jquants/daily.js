@@ -9,8 +9,8 @@
  *   旧 v1 ID トークン方式も後方互換として受け付ける
  *
  * 環境変数 (.dev.vars / Pages Secret どちらにも設定可):
- *   JQUANTS_API_KEY  ... v2 API キー (推奨)
- *   JQUANTS_TOKEN    ... v1 ID トークン (後方互換)
+ *   JQUANTS_API_KEY  ... v2 API キー → x-api-key ヘッダーで送信 (推奨)
+ *   JQUANTS_TOKEN    ... v1 ID トークン → Authorization: Bearer で送信 (後方互換)
  *
  * 環境変数が設定済みであれば画面入力は不要。
  */
@@ -29,13 +29,27 @@ const json = (body, status = 200) =>
  * 使用する Authorization ヘッダー値を決定する。
  * 優先順位: 環境変数 JQUANTS_API_KEY > リクエストヘッダー > 環境変数 JQUANTS_TOKEN
  */
-function resolveAuth(requestAuth, env) {
-  const apiKey = (env.JQUANTS_API_KEY || '').trim()
-  if (apiKey) return `Bearer ${apiKey}`
-  const fromRequest = requestAuth.replace(/^Bearer\s+/i, '').trim()
-  if (fromRequest) return `Bearer ${fromRequest}`
-  const idToken = (env.JQUANTS_TOKEN || '').trim()
-  if (idToken) return `Bearer ${idToken}`
+/**
+ * 認証情報を { type, value } で返す。
+ *   type='apikey'  → x-api-key ヘッダー (v2)
+ *   type='bearer'  → Authorization: Bearer ヘッダー (v1 後方互換)
+ * 優先順位: 環境変数 JQUANTS_API_KEY > リクエストの x-api-key/Authorization > 環境変数 JQUANTS_TOKEN
+ */
+function resolveAuth(request, env) {
+  const envApiKey = (env.JQUANTS_API_KEY || '').trim()
+  if (envApiKey) return { type: 'apikey', value: envApiKey }
+
+  const reqApiKey = (request.headers.get('x-api-key') || '').trim()
+  if (reqApiKey) return { type: 'apikey', value: reqApiKey }
+
+  const bearer = (request.headers.get('Authorization') || '')
+    .replace(/^Bearer\s+/i, '')
+    .trim()
+  if (bearer) return { type: 'bearer', value: bearer }
+
+  const envToken = (env.JQUANTS_TOKEN || '').trim()
+  if (envToken) return { type: 'bearer', value: envToken }
+
   return null
 }
 
@@ -43,20 +57,18 @@ export async function onRequestGet({ request, env }) {
   const url = new URL(request.url)
   const code = (url.searchParams.get('code') || '').trim()
   const date = (url.searchParams.get('date') || '').replace(/-/g, '')
-  const requestAuth = request.headers.get('Authorization') || ''
-
   if (!/^\d{5}$/.test(code))
     return json({ error: '銘柄コードは5桁で指定してください。' }, 400)
   if (!/^\d{8}$/.test(date))
     return json({ error: '日付はYYYY-MM-DDで指定してください。' }, 400)
 
-  const authorization = resolveAuth(requestAuth, env)
-  if (!authorization)
+  const auth = resolveAuth(request, env)
+  if (!auth)
     return json(
       {
         error:
           'J-Quants の認証情報がありません。' +
-          '.dev.vars または Pages Secret に JQUANTS_API_KEY (v2) を設定してください。',
+          '.dev.vars または Pages Secret に JQUANTS_API_KEY を設定してください。',
       },
       400,
     )
@@ -67,9 +79,14 @@ export async function onRequestGet({ request, env }) {
     apiUrl.searchParams.set('from', date)
     apiUrl.searchParams.set('to', date)
 
-    const response = await fetch(apiUrl, {
-      headers: { Authorization: authorization, Accept: 'application/json' },
-    })
+    const apiHeaders = { Accept: 'application/json' }
+    if (auth.type === 'apikey') {
+      apiHeaders['x-api-key'] = auth.value
+    } else {
+      apiHeaders['Authorization'] = `Bearer ${auth.value}`
+    }
+
+    const response = await fetch(apiUrl, { headers: apiHeaders })
     const body = await response.json().catch(() => ({}))
     if (!response.ok) {
       return json(
