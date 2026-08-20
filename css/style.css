@@ -459,7 +459,7 @@ body[data-mode='live'] {
 }
 .monitor-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 .monitor-summary-grid > div {
@@ -543,9 +543,6 @@ body[data-mode='live'] {
   font-weight: 700;
   font-size: 1rem;
   min-width: 60px;
-}
-.lib-item .li-name {
-  min-width: 130px;
 }
 .lib-item .li-meta {
   color: var(--tx3);

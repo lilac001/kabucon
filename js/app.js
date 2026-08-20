@@ -112,7 +112,6 @@ const App = {
   async startRecording() {
     const kind = $('#rec-source').value
     const symbol = $('#rec-symbol').value.trim() || '0000'
-    const symbolName = $('#rec-symbol-name').value.trim() || symbol
     const statusEl = $('#rec-status')
     statusEl.className = 'rec-status'
     statusEl.textContent = '開始中…'
@@ -137,7 +136,6 @@ const App = {
     $('#mon-boards').textContent = '0'
     $('#mon-chunks').textContent = '0'
     $('#mon-elapsed').textContent = '0:00'
-    $('#mon-summary-name').textContent = symbolName
     $('#mon-summary-count').textContent = '0'
     $('#mon-summary-avg').textContent = '--'
     $('#mon-summary-period').textContent = '--'
@@ -171,7 +169,6 @@ const App = {
           this.monPrices.length
         const firstTime = this.monTicks[0].t
         const lastTime = ev.t
-        $('#mon-summary-name').textContent = symbolName
         $('#mon-summary-count').textContent =
           this.monTicks.length.toLocaleString()
         $('#mon-summary-avg').textContent = fmtPrice(avg)
@@ -201,7 +198,7 @@ const App = {
         sourceKind: kind,
         sourceOpts,
         symbol,
-        symbolName,
+        symbolName: '',
         recDate,
       })
       statusEl.className = 'rec-status recording'
@@ -256,7 +253,6 @@ const App = {
           (r) => `
         <div class="lib-item">
           <span class="li-sym">${r.symbol}</span>
-          <span class="li-name">${r.symbol_name || ''}</span>
           <span class="src-badge">${srcLabel[r.source] || r.source}</span>
           <span class="li-meta">${r.rec_date} / ${r.tick_count}tick / ${fmtPrice(r.start_price)}→${fmtPrice(r.end_price)}</span>
           <div class="li-actions">
@@ -449,7 +445,7 @@ const App = {
     }
 
     let symbol = $('#rec-symbol').value.trim() || '7203'
-    let symbolName = $('#rec-symbol-name').value.trim() || symbol
+    let symbolName = symbol
 
     if (mode === 'practice' && recordingId) {
       const rec = await api.get('recordings', recordingId)
@@ -458,7 +454,7 @@ const App = {
         return
       }
       symbol = rec.symbol
-      symbolName = rec.symbol_name
+      symbolName = rec.symbol_name || symbol
       $('#playback-bar').style.display = 'flex'
       const events = await loadRecordingEvents(recordingId)
       if (!events.length) {
@@ -477,7 +473,7 @@ const App = {
       })
       this.liveSource.onEvent = (ev) => this.onLiveEvent(ev)
       this.liveSource.start()
-      symbolName = symbolName || 'シミュレーター'
+      symbolName = 'シミュレーター'
       this.mode = 'practice'
     } else if (mode === 'support') {
       $('#playback-bar').style.display = 'none'
@@ -486,7 +482,9 @@ const App = {
         $('#rec-source').value === 'jquants'
           ? 'simulator'
           : $('#rec-source').value
-      const opts = { basePrice: parseFloat($('#rec-base-price').value) || 3000 }
+      const opts = {}
+      if (kind === 'simulator')
+        opts.basePrice = parseFloat($('#rec-base-price').value) || 3000
       if (kind === 'kabu') opts.password = $('#rec-kabu-pw').value
       if (kind === 'bridge') opts.url = $('#rec-bridge-url').value.trim()
       this.liveSource = createSource(kind, { ...opts, symbol })
